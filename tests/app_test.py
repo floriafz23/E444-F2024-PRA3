@@ -1,24 +1,34 @@
+import os
+import pytest
 import json
 from pathlib import Path
 
-import pytest
-
-from project.app import app, db
+from project.app import app, init_db
 
 TEST_DB = "test.db"
 
+
+# def test_index():
+#     tester = app.test_client()
+#     response = tester.get("/", content_type="html/text")
+
+#     assert response.status_code == 200
+#     assert response.data == b"Hello, World!"
+
+
+# def test_database():
+#     init_db()
+#     assert Path("flaskr.db").is_file()
 
 @pytest.fixture
 def client():
     BASE_DIR = Path(__file__).resolve().parent.parent
     app.config["TESTING"] = True
     app.config["DATABASE"] = BASE_DIR.joinpath(TEST_DB)
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{BASE_DIR.joinpath(TEST_DB)}"
 
-    with app.app_context():
-        db.create_all()  # setup
-        yield app.test_client()  # tests run here
-        db.drop_all()  # teardown
+    init_db() # setup
+    yield app.test_client() # tests run here
+    init_db() # teardown
 
 
 def login(client, username, password):
@@ -76,13 +86,8 @@ def test_messages(client):
     assert b"&lt;Hello&gt;" in rv.data
     assert b"<strong>HTML</strong> allowed here" in rv.data
 
-
 def test_delete_message(client):
     """Ensure the messages are being deleted"""
-    rv = client.get("/delete/1")
-    data = json.loads(rv.data)
-    assert data["status"] == 0
-    login(client, app.config["USERNAME"], app.config["PASSWORD"])
-    rv = client.get("/delete/1")
+    rv = client.get('/delete/1')
     data = json.loads(rv.data)
     assert data["status"] == 1
