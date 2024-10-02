@@ -40,7 +40,12 @@ app.config.from_object(__name__)
 db = SQLAlchemy(app)
 
 from project import models
+with app.app_context():
+    # create the database and the db table
+    db.create_all()
 
+    # commit the changes
+    db.session.commit()
 
 # connect to database
 def connect_db():
@@ -52,9 +57,6 @@ def connect_db():
 
 # create the database
 def init_db():
-    with app.context():
-        db.create_all()
-        db.context.commit()
     with app.app_context():
         db = get_db()
         with app.open_resource("schema.sql", mode="r") as f:
